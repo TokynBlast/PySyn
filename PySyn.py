@@ -59,42 +59,61 @@ class Synth8Bit:
         self.waveform_type = waveform_type
 
 if __name__ == '__main__':
-    synth = Synth8Bit()
-    # C major scale frequencies
-    frequencies = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25]
-    
-    synth.set_waveform('square')
+    synth = Synth8Bit(sample_rate=22050)  # 8-bit style sample rate
 
-    # Generate 3 minutes of music (180 seconds)
+    # Common 8-bit frequencies with weights (higher weight = more common)
+    freq_weights = {
+        # Very common notes in 8-bit games
+        440.00: 10,  # A4 - common baseline
+        493.88: 8,   # B4 - common melody
+        523.25: 8,   # C5 - common melody
+        587.33: 7,   # D5
+        659.25: 7,   # E5
+        
+        # Less common but useful notes
+        329.63: 4,   # E4 - lower register
+        392.00: 4,   # G4 - harmony
+        698.46: 4,   # F5 - higher notes
+        783.99: 3,   # G5
+        
+        # Special effect frequencies
+        220.00: 2,   # A3 - bass notes
+        880.00: 2,   # A5 - high notes
+        1046.50: 1,  # C6 - very high (sparse use)
+    }
+
+    frequencies = []
+    weights = []
+    for freq, weight in freq_weights.items():
+        frequencies.append(freq)
+        weights.append(weight)
+
+    # More diverse waveforms for different sound characteristics
+    waveforms = {
+        'square': 0.5,    # Classic 8-bit lead
+        'triangle': 0.3,  # Softer sound
+        'sawtooth': 0.2   # Harsh effect sounds
+    }
+
     total_time = 0
-    current_freq_index = 0
-    last_two_indices = [-1, -1]  # Keep track of last two frequency indices
-    
-    while total_time < 120:
-        # Get potential new index within 4 steps of current index
-        new_index = current_freq_index + random.randint(-2, 2)
-        new_index = max(0, min(new_index, len(frequencies) - 1))
-        
-        # Keep generating new indices if the current one was used in last two times
-        while new_index in last_two_indices:
-            direction = random.choice([-1, 1])
-            new_index = current_freq_index + direction
-            new_index = max(0, min(new_index, len(frequencies) - 1))
-        
-        # Update history
-        last_two_indices[0] = last_two_indices[1]
-        last_two_indices[1] = new_index
-        current_freq_index = new_index
-        
-        freq = frequencies[current_freq_index]
+    while total_time < 30:
+        # Choose frequency based on weights
+        freq = random.choices(frequencies, weights=weights, k=1)[0]
         synth.set_frequency(freq)
-        duration = random.uniform(0.2, 0.5)
+        
+        # Choose waveform based on weights
+        waveform = random.choices(list(waveforms.keys()), 
+                                weights=list(waveforms.values()), k=1)[0]
+        synth.set_waveform(waveform)
+        
+        # 8-bit style note durations
+        duration = random.choice([0.1, 0.2, 0.3])  # Shorter, snappier notes
+        synth.set_amplitude(random.uniform(0.4, 0.7))
+        
         synth.add_note(duration)
         total_time += duration
-        print(f"""Frequency:{freq:.2f}""")
+        print(f"Freq: {freq:.2f} Hz, Wave: {waveform}")
 
-    # Save to WAV file in Documents folder
     import os
-    documents_path = os.path.join(os.path.expanduser('~'), 'Documents')
-    output_path = os.path.join(documents_path, 'output_song.wav')
+    output_path = os.path.join(os.path.expanduser('~'), 'Documents', '8bit_tune.wav')
     synth.save_to_wav(output_path)
