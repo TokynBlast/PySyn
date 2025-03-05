@@ -82,7 +82,7 @@ if __name__ == '__main__':
     }
 
     total_time = 0
-    while total_time < 30:
+    while total_time < 300:
         freq = random.choices(frequencies, weights=weights, k=1)[0]
         synth.set_frequency(freq)
         
