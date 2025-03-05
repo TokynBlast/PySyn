@@ -3,8 +3,6 @@ import random
 import wave
 import array
 import os
-import struct
-import time
 import random
 
 class Synth8Bit:
@@ -53,46 +51,6 @@ class Synth8Bit:
     def set_waveform(self, waveform_type):
         self.waveform_type = waveform_type
 
-def get_random_bytes_from_files():
-    """Get random bytes from random system files"""
-    system_paths = (['/dev', '/proc', '/sys', '/var/log', os.getcwd()] if os.name != 'nt' 
-                   else ['C:\\Windows\\System32', os.getcwd()])
-    try:
-        base_dir = random.choice(system_paths)
-        for root, _, files in os.walk(base_dir, topdown=False):
-            if files:
-                try:
-                    file_name = random.choice(files)
-                    file_path = os.path.join(root, file_name)
-                    with open(file_path, 'rb') as f:
-                        f.seek(random.randint(0, max(0, os.path.getsize(file_path) - 8)))
-                        data = f.read(8)
-                        if len(data) == 8:
-                            # Store the file info as attributes
-                            get_random_bytes_from_files.last_file_path = file_name
-                            get_random_bytes_from_files.last_directory = root
-                            return data
-                except (IOError, OSError):
-                    continue
-    except Exception:
-        pass
-    # Fallback
-    return struct.pack('d', time.time())
-
-def get_random_seed():
-    """50% chance of using file-based randomness"""
-    if random.random() < 0.5:
-        # Use file-based randomness
-        random_bytes = get_random_bytes_from_files()
-        # Get the last accessed file info from the function
-        try:
-            file_path = get_random_bytes_from_files.last_file_path
-            directory = get_random_bytes_from_files.last_directory
-        except AttributeError:
-            file_path, directory = '', ''
-        return struct.unpack('Q', random_bytes)[0], (file_path, directory)
-    return None, (None, None)
-
 if __name__ == '__main__':
     synth = Synth8Bit(sample_rate=22050)  # 8-bit style sample rate
 
@@ -125,18 +83,11 @@ if __name__ == '__main__':
 
     total_time = 0
     while total_time < 30:
-        seed_info = get_random_seed()
-        seed = seed_info[0]
-        file_path, directory = seed_info[1]
-        seed_type = f'file ({directory}/{file_path})' if seed is not None else 'norm'
-        if seed is not None:
-            random.seed(seed)
-
         freq = random.choices(frequencies, weights=weights, k=1)[0]
         synth.set_frequency(freq)
         
         waveform = random.choices(list(waveforms.keys()), 
-                                  weights=list(waveforms.values()), k=1)[0]
+                                weights=list(waveforms.values()), k=1)[0]
         synth.set_waveform(waveform)
         
         duration = random.choice([0.1, 0.2, 0.3])
@@ -144,11 +95,7 @@ if __name__ == '__main__':
         
         synth.add_note(duration)
         total_time += duration
-        print(f"Freq: {freq:.2f} Hz, Wave: {waveform}, Seed: {seed_type}")
-        
-        # Reset the seed to prevent seed looping
-        if seed is not None:
-            random.seed()
+        print(f"Freq: {freq:.2f} Hz, Wave: {waveform}")
 
     output_path = os.path.join(os.path.expanduser('~'), '8bit_tune.wav')
     synth.save_to_wav(output_path)
