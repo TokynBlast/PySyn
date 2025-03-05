@@ -1,1 +1,2 @@
 exclude .github/* CODE_OF_CONDUCT.md
+exclude .github/**/*.py
