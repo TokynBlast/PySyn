@@ -2,7 +2,6 @@
 TODO:
 - Add a method to change the waveform type (square, sine, triangle, sawtooth)
 - Fix save location
-- Limit same note selection to 2
 - Add more randomness to note selection
 """
 
@@ -66,13 +65,27 @@ if __name__ == '__main__':
     
     synth.set_waveform('square')
 
+    # Generate 3 minutes of music (180 seconds)
     total_time = 0
-    current_freq_index = 0  # Start with first frequency
+    current_freq_index = 0
+    last_two_indices = [-1, -1]  # Keep track of last two frequency indices
+    
     while total_time < 120:
-        # Get random index within 4 steps of current index
-        new_index = current_freq_index + random.randint(-3, 3)
-        new_index = max(0, min(new_index, len(frequencies) - 1))  # Keep within bounds
+        # Get potential new index within 4 steps of current index
+        new_index = current_freq_index + random.randint(-2, 2)
+        new_index = max(0, min(new_index, len(frequencies) - 1))
+        
+        # Keep generating new indices if the current one was used in last two times
+        while new_index in last_two_indices:
+            direction = random.choice([-1, 1])
+            new_index = current_freq_index + direction
+            new_index = max(0, min(new_index, len(frequencies) - 1))
+        
+        # Update history
+        last_two_indices[0] = last_two_indices[1]
+        last_two_indices[1] = new_index
         current_freq_index = new_index
+        
         freq = frequencies[current_freq_index]
         synth.set_frequency(freq)
         duration = random.uniform(0.2, 0.5)
@@ -80,6 +93,7 @@ if __name__ == '__main__':
         total_time += duration
         print(f"""Frequency:{freq:.2f}""")
 
+    # Save to WAV file in Documents folder
     import os
     documents_path = os.path.join(os.path.expanduser('~'), 'Documents')
     output_path = os.path.join(documents_path, 'output_song.wav')
