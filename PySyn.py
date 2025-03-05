@@ -29,10 +29,10 @@ class Synth8Bit:
         else:
             return 0.0
 
-    """def add_note(self, duration=1.0):
+    def add_note(self, duration=1.0):
         num_frames = int(self.sample_rate * duration)
         samples = [self.amplitude * self.generate_sample(i / self.sample_rate) for i in range(num_frames)]
-        self.all_samples.extend(samples)"""
+        self.all_samples.extend(samples)
 
     def save_to_wav(self, filename):
         # Convert to int8 format, clipping values to [-1, 1]
