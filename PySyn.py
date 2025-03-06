@@ -4,9 +4,10 @@ import wave
 import array
 import os
 import random
+import time
 
 class Synth8Bit:
-    def __init__(self, sample_rate=44100, channels=1):
+    def __init__(self, sample_rate=44100, channels=1, seed=None):
         self.sample_rate = sample_rate
         self.channels = channels
         self.frequency = 440.0
@@ -14,7 +15,10 @@ class Synth8Bit:
         self.duty_cycle = 0.5
         self.waveform_type = 'square'
         self.all_samples = []  # Store all samples
+        self.seed = seed if seed is not None else int(time.time() * 1000)
+        self.rng = random.Random(self.seed)  # Create dedicated RNG instance
 
+    # [Previous methods remain unchanged]
     def generate_sample(self, time_val):
         if self.waveform_type == 'square':
             return 1.0 if (time_val * self.frequency) % 1 < self.duty_cycle else -1.0
@@ -33,12 +37,11 @@ class Synth8Bit:
         self.all_samples.extend(samples)
 
     def save_to_wav(self, filename):
-        # Convert to int8 format, clipping values to [-1, 1]
         samples_clipped = [max(-1.0, min(1.0, sample)) for sample in self.all_samples]
         samples_int8 = array.array('b', [int(sample * 127) for sample in samples_clipped])
         with wave.open(filename, 'w') as wav_file:
-            wav_file.setnchannels(self.channels)  # Set number of channels
-            wav_file.setsampwidth(1)  # 1 byte for int8
+            wav_file.setnchannels(self.channels)
+            wav_file.setsampwidth(1)
             wav_file.setframerate(self.sample_rate)
             wav_file.writeframes(samples_int8.tobytes())
 
@@ -51,8 +54,13 @@ class Synth8Bit:
     def set_waveform(self, waveform_type):
         self.waveform_type = waveform_type
 
+    def get_seed(self):
+        return self.seed
+
 if __name__ == '__main__':
-    synth = Synth8Bit(sample_rate=22050)  # 8-bit style sample rate
+    synth = Synth8Bit(sample_rate=22050, seed=6)
+    
+    print(f"Using seed: {synth.get_seed()}")
 
     freq_weights = {
         440.00: 10,  # A4 - common baseline
@@ -82,20 +90,19 @@ if __name__ == '__main__':
     }
 
     total_time = 0
-    while total_time < 300:
-        freq = random.choices(frequencies, weights=weights, k=1)[0]
+    while total_time < 2:
+        freq = synth.rng.choices(frequencies, weights=weights, k=1)[0]
         synth.set_frequency(freq)
         
-        waveform = random.choices(list(waveforms.keys()), 
-                                weights=list(waveforms.values()), k=1)[0]
+        waveform = synth.rng.choices(list(waveforms.keys()), 
+                                   weights=list(waveforms.values()), k=1)[0]
         synth.set_waveform(waveform)
         
-        duration = random.choice([0.1, 0.2, 0.3])
-        synth.set_amplitude(random.uniform(0.4, 0.7))
-        
-        synth.add_note(duration)
+        duration = synth.rng.choice([0.1, 0.2, 0.3])
+        synth.set_amplitude(synth.rng.uniform(0.4, 0.7))
+        synth.add_note(duration)  # Generate and store the samples for this note
         total_time += duration
         print(f"Freq: {freq:.2f} Hz, Wave: {waveform}")
 
-    output_path = os.path.join(os.path.expanduser('~'), '8bit_tune.wav')
+    output_path = os.path.join(os.path.expanduser('~'), f'8bit_tune_{synth.get_seed()}.wav')
     synth.save_to_wav(output_path)
