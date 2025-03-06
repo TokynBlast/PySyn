@@ -14,11 +14,10 @@ class Synth8Bit:
         self.amplitude = 0.5
         self.duty_cycle = 0.5
         self.waveform_type = 'square'
-        self.all_samples = []  # Store all samples
+        self.all_samples = []
         self.seed = seed if seed is not None else int(time.time() * 1000)
-        self.rng = random.Random(self.seed)  # Create dedicated RNG instance
+        self.rng = random.Random(self.seed)
 
-    # [Previous methods remain unchanged]
     def generate_sample(self, time_val):
         if self.waveform_type == 'square':
             return 1.0 if (time_val * self.frequency) % 1 < self.duty_cycle else -1.0
@@ -107,4 +106,4 @@ def synth(seed=None, dur=10):
     synth.save_to_wav(output_path)
 
 
-synth()
+synth(43242895734852703587340573409878437268957389679805763489027589478695437258960532, 15)
