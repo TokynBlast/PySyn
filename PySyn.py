@@ -56,9 +56,8 @@ class Synth8Bit:
 
     def get_seed(self):
         return self.seed
-
-if __name__ == '__main__':
-    synth = Synth8Bit(sample_rate=22050, seed=6)
+def synth(seed=None, dur=10):
+    synth = Synth8Bit(sample_rate=22050, seed=seed)
     
     print(f"Using seed: {synth.get_seed()}")
 
@@ -90,7 +89,7 @@ if __name__ == '__main__':
     }
 
     total_time = 0
-    while total_time < 2:
+    while total_time < dur:
         freq = synth.rng.choices(frequencies, weights=weights, k=1)[0]
         synth.set_frequency(freq)
         
@@ -100,9 +99,12 @@ if __name__ == '__main__':
         
         duration = synth.rng.choice([0.1, 0.2, 0.3])
         synth.set_amplitude(synth.rng.uniform(0.4, 0.7))
-        synth.add_note(duration)  # Generate and store the samples for this note
+        synth.add_note(duration)
         total_time += duration
         print(f"Freq: {freq:.2f} Hz, Wave: {waveform}")
 
     output_path = os.path.join(os.path.expanduser('~'), f'8bit_tune_{synth.get_seed()}.wav')
     synth.save_to_wav(output_path)
+
+
+synth()
